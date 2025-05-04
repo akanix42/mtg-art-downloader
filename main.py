@@ -1,7 +1,7 @@
 ﻿"""
 APP TO EXECUTE THE SEARCH
 """
-
+import traceback
 import os
 import re
 import sys
@@ -129,11 +129,17 @@ class Download:
         if isinstance(card, dict):
             return self.download_dict(card)
         elif isinstance(card, str):
-            return (
-                self.download_detailed(card)
-                if " (" in card
-                else self.download_normal(card)
-            )
+            try:
+                return (
+                    self.download_detailed(card)
+                    if " (" in card
+                    else self.download_normal(card)
+                )
+            except Exception as e:
+                # Code to handle the exception
+                console.print(f"An error occurred: {str(e)}")
+                console.print(f"Card Error: {str(card)}")
+                traceback.print_exc()
         console.print(f"Unknown: {str(card)}")
         return [(False, str(card))]
 
@@ -163,6 +169,7 @@ class Download:
         """
         # Prepare our return data
         results: DownloadResult = []
+        # console.print("dl nor")
 
         # Retrieve scryfall data
         res = get_scryfall_card_search(
@@ -201,6 +208,7 @@ class Download:
         @param item: Card name (SET) number
         @return: True if successful, False if unsuccessful.
         """
+        # console.print("dl det")
         # Setup card details (Array destructuring)
         name, code, number = detailed_reg.findall(item)[0]
 
@@ -224,6 +232,8 @@ class Download:
         @param card: Dict of card data
         @return: True if succeeded, False if not
         """
+        # console.print("dl dict")
+        
         # Ensure this is a real card
         if not card.get("name"):
             return [(False, "No Card Specified")]
