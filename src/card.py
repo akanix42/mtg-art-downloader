@@ -12,12 +12,31 @@ from bs4 import BeautifulSoup
 from unidecode import unidecode
 from src import settings as cfg
 from src import core
-from src.constants import con
+from src.constants import con, console
 from src.core import log_failed, log_mtgp, log_scryfall
 from src.fetch import get_scryfall_image, get_mtgp_image, get_mtgp_page
 from src.types import DownloadResult
 
 cwd = os.getcwd()
+
+def substring_before(text, character):
+    # console.print("substring_before")
+    # console.print(text)
+    # console.print(character)
+    index = text.find(character)
+    if index == -1:
+        return text
+    return text[:index]
+
+def substring_after(text, character):
+    # console.print("substring_after")
+    # console.print(text)
+    # console.print(character)
+    index = text.find(character)
+
+    if index == -1:
+        return text
+    return text[index + 1:]
 
 
 """
@@ -73,6 +92,10 @@ class Card:
 
     @property
     def set(self) -> str:
+        if self.c.get("set", "") == "plst":
+            number=self.c.get("collector_number", "")
+            # console.print(f"{number}")
+            return substring_before(self.c.get("collector_number", ""), "-")
         return self.c.get("set", "")
 
     @property
@@ -85,7 +108,7 @@ class Card:
 
     @property
     def number(self) -> str:
-        return self.c.get("collector_number", "")
+        return substring_after(self.c.get("collector_number", ""), "-").zfill(3)
 
     @property
     def set_name(self) -> str:
@@ -130,9 +153,9 @@ class Card:
     @cached_property
     def mtgp_set(self) -> str:
         # Acquire MTGP appropriate set code
-        mtgp_set = self.set
+        mtgp_set = self.set.lower()
         if mtgp_set in cfg.replace_sets:
-            mtgp_set = cfg.replace_sets[self.set]
+            mtgp_set = cfg.replace_sets[mtgp_set]
 
         # Check for promo set
         if mtgp_set in con.promo_sets:
@@ -158,6 +181,7 @@ class Card:
     @cached_property
     def mtgp_url(self) -> Optional[str]:
         # Acquire best download link for MTGP image
+        # console.print(f"https://www.mtgpics.com/card?ref={self.mtgp_code}")
         html = get_mtgp_page(f"https://www.mtgpics.com/card?ref={self.mtgp_code}")
         if not html:
             return None
@@ -223,6 +247,9 @@ class Card:
         @param logging: Log failed downloads if True.
         @return: List of tuple results containing success state, and card label.
         """
+        # console.print(f"{self.mtgp_url}")
+        # console.print(f"{self.scry_url}")
+
         # Download only scryfall?
         if cfg.only_scryfall:
             if self.download_scryfall(self.scry_url, self.scry_path, self.label):

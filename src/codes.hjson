@@ -492,4 +492,6 @@
     # === VANGUARD === #
     # pmoa: None
 
+    # === misc ===
+    mb2: ms2
 }
